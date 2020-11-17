@@ -1,18 +1,19 @@
 import React from 'react'
 
-const PersonAndNumber = ({name, number}) => {
+const PersonAndNumber = ({name, number, id , removePerson}) => {
+  console.log(removePerson)
   return (
-    <div>{name} {number}</div>
+    <div>{name} {number}<button onClick={() => removePerson(id)}>delete</button></div>
     )
 }
 
-const PersonList = ({personsToShow}) => {
+const PersonList = ({personsToShow, removePerson}) => {
   return (
       <div>
         <ul>
           {personsToShow.map(person =>
-            <PersonAndNumber key={person.name} 
-            name={person.name} number={person.number} />
+            <PersonAndNumber key={person.id} 
+            id={person.id} name={person.name} number={person.number} removePerson={removePerson}/>
           )}
         </ul>
       </div>
