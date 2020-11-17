@@ -1,7 +1,6 @@
 import React from 'react'
 
 const PersonAndNumber = ({name, number, id , removePerson}) => {
-  console.log(removePerson)
   return (
     <div>{name} {number}<button onClick={() => removePerson(id)}>delete</button></div>
     )

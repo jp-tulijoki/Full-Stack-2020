@@ -3,12 +3,15 @@ import PersonForm from './components/PersonForm'
 import Filter from './components/Filter'
 import PersonList from './components/PersonList'
 import personService from './services/persons'
+import './App.css'
 
 const App = () => {
   const [ persons, setPersons ] = useState([])
   const [ newName, setNewName ] = useState('')
   const [ newNumber, setNewNumber ] = useState('')
   const [ newFilter, setNewFilter ] = useState('')
+  const [ successMessage, setSuccessMessage ] = useState(null)
+  const [ errorMessage, setErrorMessage ] = useState(null)
 
   const hook = () => {
     personService
@@ -35,14 +38,23 @@ const App = () => {
           .then(() => {
             setPersons(persons.map(person => person.id !== oldData.id ? person : newData))
           })
+          .catch(error => {
+            setErrorMessage(`Information of ${newName} has already been removed from the server`)
+            setTimeout(() => {
+              setErrorMessage(null)
+            }, 5000)
+          })
       }
     } else {
       personService
         .create(newPerson)
         .then(returnedData => {
-          setPersons(persons.concat(returnedData))
-      
+          setPersons(persons.concat(returnedData))  
       })
+      setSuccessMessage(`Added ${newName}`)
+      setTimeout(() => {
+        setSuccessMessage(null)
+      }, 5000)
     }
     setNewName('')
     setNewNumber('')
@@ -72,9 +84,37 @@ const App = () => {
 
   const personsToShow = persons.filter(person => person.name.toLowerCase().includes(newFilter.toLowerCase()))
 
+  const SuccessMessage = ({ message }) => {
+    if (message === null) {
+      return null
+    } 
+
+    return (
+      <div className="success">
+        { message }
+      </div>
+    )
+    
+  }
+
+  const ErrorMessage = ({ message }) => {
+    if (message === null) {
+      return null
+    } 
+
+    return (
+      <div className="error">
+        { message }
+      </div>
+    )
+    
+  }
+
   return (
     <div>
       <h1>Phonebook</h1>
+      <SuccessMessage message={successMessage} />
+      <ErrorMessage message={errorMessage} />
       <Filter newFilter={newFilter} setFilter={setFilter} />
       <h2>Add new person</h2>
       <PersonForm addPerson={addPerson} newName={newName} handleNameChange={handleNameChange}
