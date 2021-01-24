@@ -1,4 +1,3 @@
-const { use } = require('express/lib/router')
 const Blog = require('../models/blog')
 const User = require('../models/user')
 
@@ -10,6 +9,12 @@ const initialBlogs = [
     likes: 7 
   }
 ]
+
+const testUser = {
+  username: "testuser",
+  name: "test user",
+  password: "password"
+}
 
 const blogsInDb = async () => {
   const blogs = await Blog.find({})
@@ -23,6 +28,7 @@ const usersInDb = async () => {
 
 module.exports = {
   initialBlogs,
+  testUser,
   blogsInDb,
   usersInDb
 }

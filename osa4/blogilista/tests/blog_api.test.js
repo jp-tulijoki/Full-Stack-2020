@@ -3,13 +3,18 @@ const supertest = require('supertest')
 const app = require('../app')
 const helper = require('./test_helper')
 const api = supertest(app)
-
+const User = require('../models/user')
 const Blog = require('../models/blog')
 
 beforeEach(async () => {
   await Blog.deleteMany({})
   let blogObject = new Blog(helper.initialBlogs[0])
   await blogObject.save()
+  
+  await User.deleteMany({})
+  await api
+    .post('/api/users')
+    .send(helper.testUser) 
 })
 
 test('blogs are returned as json', async () => {
@@ -32,9 +37,16 @@ test('posting adds the right blog', async () => {
     likes: 5 
   }
 
+  const login = await api
+    .post('/api/login')
+    .send(helper.testUser)
+
+  const token = login.body.token
+  
   await api
     .post('/api/blogs')
     .send(newBlog)
+    .set('authorization', `Bearer ${token}`)
     .expect(200)
     .expect('Content-Type', /application\/json/)
 
@@ -52,9 +64,16 @@ test('undefined likes is initialized to zero', async () => {
     url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html"
   }
 
+  const login = await api
+    .post('/api/login')
+    .send(helper.testUser)
+
+  const token = login.body.token
+  
   await api
     .post('/api/blogs')
     .send(newBlog)
+    .set('authorization', `Bearer ${token}`)
 
   const blogsAfterPost = await helper.blogsInDb()
   const addedBlog = blogsAfterPost.pop()
@@ -67,9 +86,16 @@ test('blog without title or url are not added', async () => {
     url: "http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.html"
   }
 
+  const login = await api
+    .post('/api/login')
+    .send(helper.testUser)
+
+  const token = login.body.token
+  
   await api
     .post('/api/blogs')
     .send(noTitle)
+    .set('authorization', `Bearer ${token}`)
     .expect(400)
 
   const noUrl = {
@@ -80,23 +106,58 @@ test('blog without title or url are not added', async () => {
   await api
     .post('/api/blogs')
     .send(noUrl)
+    .set('authorization', `Bearer ${token}`)
     .expect(400)
 
   const blogsAfterPost = await helper.blogsInDb()
   expect(blogsAfterPost).toHaveLength(helper.initialBlogs.length)
 })
 
-test('blog can be deleted', async () => {
+test('blog can not be deleted when unauthorized', async () => {
   const blogsBeforeDelete = await helper.blogsInDb()
   const id = blogsBeforeDelete[0].id
-  
+
   await api
     .delete(`/api/blogs/${id}`)
+    .expect(401)
+
+  const blogsAfterDelete = await helper.blogsInDb()
+  expect(blogsAfterDelete).toHaveLength(helper.initialBlogs.length)  
+})
+
+test('blog can be deleted when authorized', async () => {
+  const newBlog = {
+    title: "Canonical string reduction", 
+    author: "Edsger W. Dijkstra", 
+    url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html"
+  }
+
+  const login = await api
+    .post('/api/login')
+    .send(helper.testUser)
+
+  const token = login.body.token
+  
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .set('authorization', `Bearer ${token}`)
+  
+  const blogsBeforeDelete = await helper.blogsInDb()
+
+  console.log(blogsBeforeDelete)
+
+  const id = blogsBeforeDelete[1].id
+
+  await api
+    .delete(`/api/blogs/${id}`)
+    .set('authorization', `Bearer ${token}`)
     .expect(204)
 
   const blogsAfterDelete = await helper.blogsInDb()
-  expect(blogsAfterDelete).toHaveLength(helper.initialBlogs.length - 1)  
+  expect(blogsAfterDelete).toHaveLength(helper.initialBlogs.length)  
 })
+
 
 test('blog can be updated', async () => {
   const blogsBeforeUpdate = await helper.blogsInDb()
