@@ -17,11 +17,14 @@ beforeEach(async () => {
     .send(helper.testUser) 
 })
 
-test('blogs are returned as json', async () => {
+test('correct number of blogs are returned as json', async () => {
   await api
     .get('/api/blogs')
     .expect(200)
     .expect('Content-Type', /application\/json/)
+
+    const blogsAfterPost = await helper.blogsInDb()
+    expect(blogsAfterPost).toHaveLength(helper.initialBlogs.length)
 })
 
 test('the identifier is called id', async () => {
